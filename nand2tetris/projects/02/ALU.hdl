@@ -46,24 +46,26 @@ CHIP ALU {
     PARTS:
    // Put you code here:
 
-   Not16(in=x, out=notx);
-   Not16(in=y, out=noty);
+   .Not16(in=x, out=notx);
+   .Not16(in=y, out=noty);
 
-   Mux4Way16(a=x, b=false, c=notx, d=true, sel[1]=nx, sel[0]=zx, out=selectedx);
-   Mux4Way16(a=y, b=false, c=noty, d=true, sel[1]=ny, sel[0]=zy, out=selectedy);
+   .Mux4Way16(a=x, b=false, c=notx, d=true, sel[1]=nx, sel[0]=zx, out=selectedx);
+   .Mux4Way16(a=y, b=false, c=noty, d=true, sel[1]=ny, sel[0]=zy, out=selectedy);
 
    Add16(a=selectedx, b=selectedy, out=addxy);
    And16(a=selectedx, b=selectedy, out=andxy);
 
-   Mux16(a=andxy, b=addxy, sel=f, out=posout);
-   Not16(in=posout, out=negout);
-   Mux16(a=posout, b=negout, sel=no, out[0..7]=internalout07, out[8..14]=internalout814, out[15]=internalout15);
-   Mux16(a=posout, b=negout, sel=no, out=out);
+   .Mux16(a=andxy, b=addxy, sel=f, out=posout);
+   .Not16(in=posout, out=negout);
 
-   Or8Way(in=internalout07, out=orout1);
-   Or8Way(in[0..6]=internalout814, in[7]=internalout15, out=orout2);
-   Or(a=orout1, b=orout2, out=negzr);
-   
-   Not(in=negzr, out=zr);
+   .Mux16(a=posout, b=negout, sel=no, out=out, out[0..7]=internalout07, out[8..14]=internalout814, out[15]=internalout15);
+
+   .Or8Way(in=internalout07, out=orout1);
+   .Or8Way(in[0..6]=internalout814, in[7]=internalout15, out=orout2);
+   .Or(a=orout1, b=orout2, out=negzr);
+
+   .Not(in=negzr, out=zr);
    Mux(a=false, b=true, sel=internalout15, out=ng);
 }
+
+2 Mux16, 2 Mux4Way16, 3 Not16, 2 Or8Way, 1 Not, 1 Or, 1 And16, 1 Add 16, 1 Mux;
