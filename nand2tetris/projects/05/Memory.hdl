@@ -28,4 +28,14 @@ CHIP Memory {
 
     PARTS:
     // Put your code here:
+
+    DMux(in=load, sel=address[14], a=loadram, b=loadscreen);
+    And(a=address[14], b=address[13], out=readkeyboard);     //if this is true output the keyboard
+
+    RAM16K(in=in, load=loadram, address=address[0..13], out=outram);
+    Screen(in=in, load=loadscreen, address=address[0..12], out=outscreen);
+    Keyboard(out=outkbd);
+
+    Mux16(a=outscreen, b=outkbd, sel=address[13], out=outio);
+    Mux16(a=outram, b=outio, sel=address[14], out=out);
 }
