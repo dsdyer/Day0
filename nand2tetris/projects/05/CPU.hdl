@@ -67,7 +67,9 @@ CHIP CPU {
     Or(a=jump0, b=jumppos, out=jumpgt);
     Or(a=jumpgt, b=jumpneg, out=jumpresult);
 
-    PC(in=outA, load=jumpresult, inc=true, reset=truereset, out[0..14]=pc);
+    And(a=instruction[15], b=jumpresult, out=jump);
+
+    PC(in=outA, load=jump, inc=true, reset=truereset, out[0..14]=pc);
 
     And(a=instruction[15], b=instruction[3], out=writeM);
 }
