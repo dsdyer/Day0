@@ -2,11 +2,8 @@
 
 import re
 
-
 class Parser:
     def __init__(self, input_tuple):
-        # openInputFile
-            # returns input_array, each item of which is a line from the input file
         self.commands = len(input_tuple)
         self.currentPosition = 0
         self.currentCommand = input_tuple[0]
@@ -31,13 +28,20 @@ class Parser:
             raise Exception("Bad command: Check line " + str(self.currentPosition +1) + " of the input file")
     def dest(self):
         return re.split("=", self.currentCommand)[0]
+    def comp(self):
+        matches = re.findall("J?[01!&\-\+\|AMD]+=?", self.currentCommand)
+        for x in matches:
+            if re.search("=|J", x):
+                pass
+            else:
+                return x
         
 
-input_tuple = ("dest=comp;jump", "@3", "(0010011101101100)", "junk")
+input_tuple = ("A=D+A", "@3", "(0010011101101100)", "junk")
 x = Parser(input_tuple)
 
 
 x.showCurrent()
 print(x.commandType())
-print(x.dest())
+print(x.comp())
 
