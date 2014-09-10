@@ -1,1 +1,3 @@
 nand2tetris\**\*.hdl
+
+nand2tetris\**\*.out
