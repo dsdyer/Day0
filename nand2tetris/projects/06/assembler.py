@@ -2,6 +2,7 @@
 
 import re
 
+
 class Parser:
     def __init__(self, input_tuple):
         # openInputFile
@@ -22,21 +23,21 @@ class Parser:
     def commandType(self):
         if re.match("@", self.currentCommand):
             return "A_COMMAND"
-        elif re.search("=", self.currentCommand):
+        elif re.search("=|;", self.currentCommand):
             return "C_COMMAND"
         elif re.match("\(", self.currentCommand):
             return "L_COMMAND"
         else:
-            raise Exception("Bad command: Check line " + str(self.currentPosition -1) + " of the input file")
+            raise Exception("Bad command: Check line " + str(self.currentPosition +1) + " of the input file")
+    def dest(self):
+        return re.split("=", self.currentCommand)[0]
         
 
 input_tuple = ("dest=comp;jump", "@3", "(0010011101101100)", "junk")
 x = Parser(input_tuple)
-x.advance()
-x.advance()
-x.advance()
+
 
 x.showCurrent()
 print(x.commandType())
-
+print(x.dest())
 
