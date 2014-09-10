@@ -1,5 +1,7 @@
 # Assembles .asm files into machine code
 
+import re
+
 class Parser:
     def __init__(self, input_tuple):
         # openInputFile
@@ -8,25 +10,33 @@ class Parser:
         self.currentPosition = 0
         self.currentCommand = input_tuple[0]
     def advance(self):
-        self.currentPosition += 1
-        self.currentCommand = input_tuple[self.currentPosition]
+        if self.hasMoreCommands():
+            self.currentPosition += 1
+            self.currentCommand = input_tuple[self.currentPosition]
     def showCurrent(self):
         print(self.currentCommand)
     def hasMoreCommands(self):
         if self.currentPosition == self.commands - 1:
             return False
         return True
+    def commandType(self):
+        if re.match("@", self.currentCommand):
+            return "A_COMMAND"
+        elif re.search("=", self.currentCommand):
+            return "C_COMMAND"
+        elif re.match("\(", self.currentCommand):
+            return "L_COMMAND"
+        else:
+            raise Exception("Bad command: Check line " + str(self.currentPosition -1) + " of the input file")
+        
 
-input_tuple = (1, 2, 3, 4, 5)
+input_tuple = ("dest=comp;jump", "@3", "(0010011101101100)", "junk")
 x = Parser(input_tuple)
-x.advance()
 x.advance()
 x.advance()
 x.advance()
 
 x.showCurrent()
-if x.hasMoreCommands():
-    print('true!')
-else:
-    print('false!')
+print(x.commandType())
+
 
