@@ -35,13 +35,16 @@ class Parser:
                 pass
             else:
                 return x
+    def jump(self):
+        return re.findall("J[\w]{2}", self.currentCommand)[0]
+
         
 
-input_tuple = ("A=D+A", "@3", "(0010011101101100)", "junk")
+input_tuple = ("AM=M-1;JMP", "@3", "(0010011101101100)", "junk")
 x = Parser(input_tuple)
 
 
 x.showCurrent()
 print(x.commandType())
-print(x.comp())
+print(x.jump())
 
