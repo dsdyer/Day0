@@ -20,6 +20,9 @@ class Parser:
     def advance(self):
         self.currentPosition += 1
         self.currentCommand = input_tuple[self.currentPosition]
+    def reset(self):
+        self.currentPosition = 0
+        self.currentCommand = input_tuple[self.currentPosition]
     def showCurrent(self):
         print(self.currentCommand)
     def hasMoreCommands(self):
@@ -28,11 +31,11 @@ class Parser:
         return True
     def commandType(self):
         command = self.currentCommand
-        if re.match("//", command) or not re.match(".", command):
+        if re.match("^[\s]*//", command) or re.search("^\s*$", command):
             pass #current line is a blank line or comment
-        elif re.match("@", command):
+        elif re.search("^[\s]*@", command):
             return "A_COMMAND"
-        elif re.match("\(", command):
+        elif re.search("^[\s]*\(", command):
             return "L_COMMAND"
         else:
             self.lead_bits = '111'
@@ -142,41 +145,50 @@ class SymbolTable:
     def getAddress(self, symbol):
         return self.table[symbol]
 
-
-
 x = Parser(input_tuple)
-y = SymbolTable()
+symTable = SymbolTable()
 
-def passOne(input_tuple, x, y):
+def passOne(input_tuple, x, symTable):
     count = 0
-    for i, c in enumerate(input_tuple):
-        if x.commandType() in ['C_COMMAND','A_COMMAND']:
-            count += 1
-            print(count)
+    for i in input_tuple:
+        type = x.commandType()
 
-        if x.commandType() == 'L_COMMAND':
+        if type in ['C_COMMAND','A_COMMAND']:
+            count += 1
+
+        if type == 'L_COMMAND':
             symbol = re.findall("[^\(\)]+", x.currentCommand)[0]
-            y.table[symbol] = count
+            symTable.table[symbol] = count
 
         if x.hasMoreCommands():
             x.advance()
-    # print(y.table)
 
-
-def passTwo(input_tuple, x):
+def passTwo(input_tuple, x, symTable):
+    x.reset()
+    nextAddress = 16
     for i, c in enumerate(input_tuple):
-        if x.commandType() == 'C_COMMAND':
+        type = x.commandType()
+        if type == 'C_COMMAND':
             y = Code(x)
             instruction = x.lead_bits + y.comp() + y.dest() + y.jump()
             o.write(instruction + "\n")
 
-        if x.commandType() == 'A_COMMAND':
-            number = int(re.findall("[^@]+", c)[0])
-            instruction = format(number, "016b")
+        if type == 'A_COMMAND':
+            command = re.findall("[^@\s]+", c)[0]
+            try:
+                command = int(command)
+            except ValueError:
+                if command not in symTable.table:
+                    symTable.addEntry(command, nextAddress)
+                    nextAddress += 1
+                    print(nextAddress)
+                command = int(symTable.table[command])
+
+            instruction = format(command, "016b")
             o.write(instruction + "\n")
 
         if x.hasMoreCommands():
             x.advance()
 
-passOne(input_tuple, x, y)
-# passTwo(input_tuple, x)
+passOne(input_tuple, x, symTable)
+passTwo(input_tuple, x, symTable)
