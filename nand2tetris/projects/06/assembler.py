@@ -1,6 +1,15 @@
 # Assembles .asm files into machine code
 
+import sys
 import re
+
+j = open(sys.argv[1], "r")
+k = re.sub("\..+$", "", j.name)
+o = open(k + ".hack", "w+")
+
+input_tuple = []
+for line in j:
+    input_tuple.append(line.replace("\n", ""))
 
 class Parser:
     def __init__(self, input_tuple):
@@ -101,28 +110,21 @@ class SymbolTable:
     def __init__(self):
         x=1
 
-j = open("input_file.txt", "r")
-o = open("output_file.txt", "w+")
-
-input_tuple = []
-for line in j:
-    input_tuple.append(line.replace("\n", ""))
-
 x = Parser(input_tuple)
 
-for i, c in enumerate(input_tuple):
-    if x.commandType() == 'C_COMMAND':
-        y = Code(x)
-        instruction = x.lead_bits + y.comp() + y.dest() + y.jump()
-        o.write(instruction + "\n")
+def assembleIt(input_tuple, x):
+    for i, c in enumerate(input_tuple):
+        if x.commandType() == 'C_COMMAND':
+            y = Code(x)
+            instruction = x.lead_bits + y.comp() + y.dest() + y.jump()
+            o.write(instruction + "\n")
 
-    if x.commandType() == 'A_COMMAND':
-        number = int(re.findall("[^@]+", c)[0])
-        instruction = format(number, "016b")
-        o.write(instruction + "\n")
+        if x.commandType() == 'A_COMMAND':
+            number = int(re.findall("[^@]+", c)[0])
+            instruction = format(number, "016b")
+            o.write(instruction + "\n")
 
-    if x.hasMoreCommands():
-        x.advance()
+        if x.hasMoreCommands():
+            x.advance()
 
-
-
+assembleIt(input_tuple, x)
