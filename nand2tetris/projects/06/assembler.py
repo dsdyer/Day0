@@ -108,11 +108,62 @@ class Code:
 
 class SymbolTable:
     def __init__(self):
-        x=1
+        self.table = {
+        "SP"     : 0,
+        "LCL"    : 1,
+        "ARG"    : 2,
+        "THIS"   : 3,
+        "THAT"   : 4,
+        "R0"     : 0,
+        "R1"     : 1,
+        "R2"     : 2,
+        "R3"     : 3,
+        "R4"     : 4,
+        "R5"     : 5,
+        "R6"     : 6,
+        "R7"     : 7,
+        "R8"     : 8,
+        "R9"     : 9,
+        "R10"    : 10,
+        "R11"    : 11,
+        "R12"    : 12,
+        "R13"    : 13,
+        "R14"    : 14,
+        "R15"    : 15,
+        "SCREEN" : 16384,
+        "KBD"    : 24576
+        }
+    def addEntry(self, symbol, address):
+        self.table[symbol] = address
+    def contains(self, symbol):
+        if symbol in self.table:
+            return True
+        return False
+    def getAddress(self, symbol):
+        return self.table[symbol]
+
+
 
 x = Parser(input_tuple)
+y = SymbolTable()
 
-def assembleIt(input_tuple, x):
+def passOne(input_tuple, x, y):
+    count = 0
+    for i, c in enumerate(input_tuple):
+        if x.commandType() in ['C_COMMAND','A_COMMAND']:
+            count += 1
+            print(count)
+
+        if x.commandType() == 'L_COMMAND':
+            symbol = re.findall("[^\(\)]+", x.currentCommand)[0]
+            y.table[symbol] = count
+
+        if x.hasMoreCommands():
+            x.advance()
+    # print(y.table)
+
+
+def passTwo(input_tuple, x):
     for i, c in enumerate(input_tuple):
         if x.commandType() == 'C_COMMAND':
             y = Code(x)
@@ -127,4 +178,5 @@ def assembleIt(input_tuple, x):
         if x.hasMoreCommands():
             x.advance()
 
-assembleIt(input_tuple, x)
+passOne(input_tuple, x, y)
+# passTwo(input_tuple, x)
