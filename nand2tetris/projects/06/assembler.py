@@ -7,22 +7,22 @@ j = open(sys.argv[1], "r")
 k = re.sub("\..+$", "", j.name)
 o = open(k + ".hack", "w+")
 
-input_tuple = []
+input_lines = []
 for line in j:
-    input_tuple.append(line.replace("\n", ""))
+    input_lines.append(line.replace("\n", ""))
 
 class Parser:
-    def __init__(self, input_tuple):
-        self.commands = len(input_tuple)
+    def __init__(self, input_lines):
+        self.commands = len(input_lines)
         self.currentPosition = 0
-        self.currentCommand = input_tuple[0]
+        self.currentCommand = input_lines[0]
         self.lead_bits = '000'
     def advance(self):
         self.currentPosition += 1
-        self.currentCommand = input_tuple[self.currentPosition]
+        self.currentCommand = input_lines[self.currentPosition]
     def reset(self):
         self.currentPosition = 0
-        self.currentCommand = input_tuple[self.currentPosition]
+        self.currentCommand = input_lines[self.currentPosition]
     def showCurrent(self):
         print(self.currentCommand)
     def hasMoreCommands(self):
@@ -145,12 +145,12 @@ class SymbolTable:
     def getAddress(self, symbol):
         return self.table[symbol]
 
-x = Parser(input_tuple)
+x = Parser(input_lines)
 symTable = SymbolTable()
 
-def passOne(input_tuple, x, symTable):
+def passOne(input_lines, x, symTable):
     count = 0
-    for i in input_tuple:
+    for i in input_lines:
         type = x.commandType()
 
         if type in ['C_COMMAND','A_COMMAND']:
@@ -163,10 +163,10 @@ def passOne(input_tuple, x, symTable):
         if x.hasMoreCommands():
             x.advance()
 
-def passTwo(input_tuple, x, symTable):
+def passTwo(input_lines, x, symTable):
     x.reset()
     nextAddress = 16
-    for i, c in enumerate(input_tuple):
+    for i, c in enumerate(input_lines):
         type = x.commandType()
         if type == 'C_COMMAND':
             y = Code(x)
@@ -181,7 +181,6 @@ def passTwo(input_tuple, x, symTable):
                 if command not in symTable.table:
                     symTable.addEntry(command, nextAddress)
                     nextAddress += 1
-                    print(nextAddress)
                 command = int(symTable.table[command])
 
             instruction = format(command, "016b")
@@ -190,5 +189,5 @@ def passTwo(input_tuple, x, symTable):
         if x.hasMoreCommands():
             x.advance()
 
-passOne(input_tuple, x, symTable)
-passTwo(input_tuple, x, symTable)
+passOne(input_lines, x, symTable)
+passTwo(input_lines, x, symTable)
