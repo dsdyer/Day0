@@ -3,14 +3,6 @@
 import sys
 import re
 
-j = open(sys.argv[1], "r")
-k = re.sub("\..+$", "", j.name)
-o = open(k + ".hack", "w+")
-
-input_lines = []
-for line in j:
-    input_lines.append(line.replace("\n", ""))
-
 class Parser:
     def __init__(self, input_lines):
         self.input_lines = input_lines
@@ -146,9 +138,6 @@ class SymbolTable:
     def getAddress(self, symbol):
         return self.table[symbol]
 
-x = Parser(input_lines)
-symTable = SymbolTable()
-
 def passOne(x, symTable):
     input_lines = x.input_lines
     count = 0
@@ -196,7 +185,7 @@ if __name__ == "__main__":
     j = open(sys.argv[1], "r")
     k = re.sub("\..+$", "", j.name)
     o = open(k + ".hack", "w+")
-    
+
     input_lines = []
     for line in j:
         input_lines.append(line.replace("\n", ""))
