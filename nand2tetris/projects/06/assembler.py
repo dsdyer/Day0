@@ -3,30 +3,23 @@
 import sys
 import re
 
-j = open(sys.argv[1], "r")
-k = re.sub("\..+$", "", j.name)
-o = open(k + ".hack", "w+")
-
-input_lines = []
-for line in j:
-    input_lines.append(line.replace("\n", ""))
-
 class Parser:
     def __init__(self, input_lines):
-        self.commands = len(input_lines)
+        self.input_lines = input_lines
+        self.commands = len(self.input_lines)
         self.currentPosition = 0
-        self.currentCommand = input_lines[0]
+        self.currentCommand = self.input_lines[0]
         self.lead_bits = '000'
     def advance(self):
         self.currentPosition += 1
-        self.currentCommand = input_lines[self.currentPosition]
+        self.currentCommand = self.input_lines[self.currentPosition]
     def reset(self):
         self.currentPosition = 0
-        self.currentCommand = input_lines[self.currentPosition]
+        self.currentCommand = self.input_lines[self.currentPosition]
     def showCurrent(self):
         print(self.currentCommand)
     def hasMoreCommands(self):
-        if self.currentPosition + 1>= self.commands:
+        if self.currentPosition + 1 >= self.commands:
             return False
         return True
     def commandType(self):
@@ -145,10 +138,8 @@ class SymbolTable:
     def getAddress(self, symbol):
         return self.table[symbol]
 
-x = Parser(input_lines)
-symTable = SymbolTable()
-
-def passOne(input_lines, x, symTable):
+def passOne(x, symTable):
+    input_lines = x.input_lines
     count = 0
     for i in input_lines:
         type = x.commandType()
@@ -163,9 +154,10 @@ def passOne(input_lines, x, symTable):
         if x.hasMoreCommands():
             x.advance()
 
-def passTwo(input_lines, x, symTable):
-    x.reset()
+def passTwo(x, symTable):
+    input_lines = x.input_lines
     nextAddress = 16
+    x.reset()
     for i, c in enumerate(input_lines):
         type = x.commandType()
         if type == 'C_COMMAND':
@@ -189,5 +181,16 @@ def passTwo(input_lines, x, symTable):
         if x.hasMoreCommands():
             x.advance()
 
-passOne(input_lines, x, symTable)
-passTwo(input_lines, x, symTable)
+if __name__ == "__main__":
+    j = open(sys.argv[1], "r")
+    k = re.sub("\..+$", "", j.name)
+    o = open(k + ".hack", "w+")
+
+    input_lines = []
+    for line in j:
+        input_lines.append(line.replace("\n", ""))
+
+    x = Parser(input_lines)
+    symTable = SymbolTable()
+    passOne(x, symTable)
+    passTwo(x, symTable)
