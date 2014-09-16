@@ -19,7 +19,7 @@ class Parser:
     def showCurrent(self):
         print(self.currentCommand)
     def hasMoreCommands(self):
-        if self.currentPosition + 1>= self.commands:
+        if self.currentPosition + 1 >= self.commands:
             return False
         return True
     def commandType(self):
