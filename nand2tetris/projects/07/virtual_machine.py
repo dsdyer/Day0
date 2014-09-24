@@ -11,8 +11,6 @@ class Parser(object):
     for line in self.file:
       print(line)
 
-
-
 if __name__ == "__main__":
   target = sys.argv[1]
 
