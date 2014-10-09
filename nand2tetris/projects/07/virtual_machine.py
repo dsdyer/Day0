@@ -10,10 +10,10 @@ class Parser(object):
     self.commands = []
 
     for line in self.file:
-      if re.match("//", line) or not re.match(".", line):
+      if re.match("//", line) or not re.match("[^\r\n]", line):
         pass # current line is blank or whitespace
       else:
-        self.commands.append(line.replace("\n", "").split(' '))
+        self.commands.append(line.replace("\r", "").replace("\n", "").split(' '))
     self.commands = iter(self.commands)
     self.current = ''
   def showLines(self):
@@ -21,7 +21,7 @@ class Parser(object):
       print(line)
     
   def advance(self):
-    self.current = self.commands.__next__()
+    self.current = self.commands.next()
     return self.current
     
   def commandType(self):
@@ -59,7 +59,7 @@ class Parser(object):
 class CodeWriter(object):
   """docstring for CodeWriter"""
   def __init__(self, arg):
-    self.arg = arg
+    self.command = arg.current
   def setFileName(self, file_name):
     pass
   def writeArithmetic(self, command):
@@ -70,22 +70,26 @@ class CodeWriter(object):
 
 if __name__ == "__main__":
   target = sys.argv[1]
+  parsers = []
 
   if re.search("\.vm$", str(target)):     # if the argument was one .vm file, parse it
     file = sys.argv[1]
     p = Parser(file)
+    parsers.append(p)
   else:                                   # if the argument is not a .vm file, try to
     files = glob.glob(target + '/*.vm')   # treat it as a directory containing .vm files
     if len(files) >= 1:
       for x in files:
         p = Parser(x)
+        parsers.append(p)
     else:                                 # if that fails tell them
       raise Exception('Bad input. You fix.')
 
-  while True:
-    try:
-      p.advance()
-      print(p.arg2())
-    except(StopIteration):
-      print('all done')
-      break
+  for p in parsers:
+    while True:
+      try:
+        p.advance()
+        print(p.arg2())
+      except(StopIteration):
+        print('all done')
+        break
