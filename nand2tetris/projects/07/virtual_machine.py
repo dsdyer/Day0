@@ -58,10 +58,11 @@ class Parser(object):
 
 class CodeWriter(object):
   """docstring for CodeWriter"""
-  def __init__(self, arg):
-    self.command = arg.current
-  def setFileName(self, file_name):
-    pass
+  def __init__(self):
+    self.output_file = open("vm_output.asm", "w+")
+    self.working_parser = {}
+  def setFileName(self, parser):
+    self.working_parser = parser
   def writeArithmetic(self, command):
     pass
   def writePushPop(self, command):
@@ -85,11 +86,18 @@ if __name__ == "__main__":
     else:                                 # if that fails tell them
       raise Exception('Bad input. You fix.')
 
-  for p in parsers:
-    while True:
-      try:
-        p.advance()
-        print(p.arg2())
-      except(StopIteration):
-        print('all done')
-        break
+  x = CodeWriter()
+
+  for a in parsers:
+    x.setFileName(a)
+    print(x.working_parser.file.name)
+
+
+  # for p in parsers:
+  #   while True:
+  #     try:
+  #       p.advance()
+  #       print(p.arg2())
+  #     except(StopIteration):
+  #       print('all done')
+  #       break
