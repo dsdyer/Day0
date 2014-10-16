@@ -4,6 +4,7 @@ import glob
 
 class Parser(object):
   """prepares inputs for translation into assembly code"""
+  
   def __init__(self, arg):
     self.arg = arg
     self.file = open(self.arg, "r") # open the file
@@ -16,12 +17,13 @@ class Parser(object):
         self.commands.append(line.replace("\r", "").replace("\n", "").split(' '))
     self.commands = iter(self.commands)
     self.current = ''
+  
   def showLines(self):
     for line in self.file:
       print(line)
     
   def advance(self):
-    self.current = self.commands.next()
+    self.current = self.commands.__next__()
     return self.current
     
   def commandType(self):
@@ -58,13 +60,46 @@ class Parser(object):
 
 class CodeWriter(object):
   """docstring for CodeWriter"""
+  
   def __init__(self):
     self.output_file = open("vm_output.asm", "w+")
     self.working_parser = {}
+
   def setFileName(self, parser):
     self.working_parser = parser
+  
   def writeArithmetic(self, command):
-    pass
+    if command = "add":
+      assembly = [
+        "@SP",
+        "A=A-1",
+        "D=M",
+        "A=A-1",
+        "D=D+M",
+        "M=D"
+      ]
+    elif command = "sub":
+      pass
+    elif command = "neg":
+      pass
+    elif command = "eq":
+      pass
+    elif command = "gt":
+      pass
+    elif command = "lt":
+      pass
+    elif command = "and":
+      pass
+    elif command = "or":
+      pass
+    elif command = "not":
+      pass
+    else:
+      raise(Exception('Somthing isn't right!))
+
+
+    print(command)
+  
   def writePushPop(self, command):
     pass
     
@@ -90,14 +125,11 @@ if __name__ == "__main__":
 
   for a in parsers:
     x.setFileName(a)
-    print(x.working_parser.file.name)
-
-
-  # for p in parsers:
-  #   while True:
-  #     try:
-  #       p.advance()
-  #       print(p.arg2())
-  #     except(StopIteration):
-  #       print('all done')
-  #       break
+    while True:
+      try: 
+        c = x.working_parser.advance()
+        if x.working_parser.commandType() == 'C_ARITHMETIC':
+          x.writeArithmetic(c)
+        # x.output_file.write(" ".join(c) + "\n")
+      except(StopIteration):
+        break
