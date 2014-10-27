@@ -88,7 +88,11 @@ class CodeWriter(object):
         "M=D"
       ]
     elif command = "neg":
-      pass
+      assembly = [
+        "@SP",
+        "A=A-1",
+        "M=-M"
+      ]
     elif command = "eq":
       pass
     elif command = "gt":
