@@ -79,7 +79,14 @@ class CodeWriter(object):
         "M=D"
       ]
     elif command = "sub":
-      pass
+      assembly = [
+        "@SP",
+        "A=A-1",
+        "D=M",
+        "A=A-1",
+        "D=M-D",
+        "M=D"
+      ]
     elif command = "neg":
       pass
     elif command = "eq":
@@ -95,7 +102,7 @@ class CodeWriter(object):
     elif command = "not":
       pass
     else:
-      raise(Exception('Somthing isn't right!))
+      raise(Exception('Somthing isn\'t right!'))
 
 
     print(command)
