@@ -23,7 +23,7 @@ class Parser(object):
       print(line)
     
   def advance(self):
-    self.current = self.commands.__next__()
+    self.current = self.commands.next()
     return self.current
     
   def commandType(self):
@@ -64,55 +64,196 @@ class CodeWriter(object):
   def __init__(self):
     self.output_file = open("vm_output.asm", "w+")
     self.working_parser = {}
+    self.labelID = 0;
 
   def setFileName(self, parser):
     self.working_parser = parser
-  
+
+  def uniqueLabel(self, label):
+    unique_label = label + str(self.labelID)
+    self.labelID += 1
+    return unique_label
+
   def writeArithmetic(self, command):
-    if command = "add":
+    if command[0] == "add":
       assembly = [
         "@SP",
-        "A=A-1",
+        "AM=M-1",
         "D=M",
-        "A=A-1",
-        "D=D+M",
-        "M=D"
+        "@SP",
+        "AM=M-1",
+        "M=D+M",
+        "@SP",
+        "M=M+1"
       ]
-    elif command = "sub":
+    elif command[0] == "sub":
       assembly = [
         "@SP",
-        "A=A-1",
+        "AM=M-1",
         "D=M",
-        "A=A-1",
+        "@SP",
+        "AM=M-1",
+        "M=M-D",
+        "@SP",
+        "M=M+1"
+      ]
+    elif command[0] == "neg":
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "M=-M",
+        "@SP",
+        "M=M+1"
+      ]
+    elif command[0] == "eq":
+      labels = { 
+        "TRUE"  : self.uniqueLabel('TRUE'), 
+        "FALSE" : self.uniqueLabel('FALSE'), 
+        "END"   : self.uniqueLabel('END')
+      }
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "D=M",
+        "@SP",
+        "AM=M-1",
         "D=M-D",
-        "M=D"
+        "@" + labels["TRUE"],
+        "D;JEQ",
+        "@" + labels["FALSE"],
+        "D;JNE",
+        "(" + labels["TRUE"] + ")",
+        "@SP",
+        "A=M",
+        "M=-1",
+        "@SP",
+        "M=M+1",
+        "@" + labels["END"],
+        "0;JMP",
+        "(" + labels["FALSE"] + ")",
+        "@SP",
+        "A=M",
+        "M=0",
+        "@SP",
+        "M=M+1",
+        "(" + labels["END"] + ")",
       ]
-    elif command = "neg":
+    elif command[0] == "gt":
+      labels = { 
+        "TRUE"  : self.uniqueLabel('TRUE'), 
+        "FALSE" : self.uniqueLabel('FALSE'), 
+        "END"   : self.uniqueLabel('END')
+      }
       assembly = [
         "@SP",
-        "A=A-1",
-        "M=-M"
+        "AM=M-1",
+        "D=M",
+        "@SP",
+        "AM=M-1",
+        "D=M-D",
+        "@" + labels["TRUE"],
+        "D;JGT",
+        "@" + labels["FALSE"],
+        "D;JLE",
+        "(" + labels["TRUE"] + ")",
+        "@SP",
+        "A=M",
+        "M=-1",
+        "@SP",
+        "M=M+1",
+        "@" + labels["END"],
+        "0;JMP",
+        "(" + labels["FALSE"] + ")",
+        "@SP",
+        "A=M",
+        "M=0",
+        "@SP",
+        "M=M+1",
+        "(" + labels["END"] + ")",
       ]
-    elif command = "eq":
-      pass
-    elif command = "gt":
-      pass
-    elif command = "lt":
-      pass
-    elif command = "and":
-      pass
-    elif command = "or":
-      pass
-    elif command = "not":
-      pass
+    elif command[0] == "lt":
+      labels = { 
+        "TRUE"  : self.uniqueLabel('TRUE'), 
+        "FALSE" : self.uniqueLabel('FALSE'), 
+        "END"   : self.uniqueLabel('END')
+      }
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "D=M",
+        "@SP",
+        "AM=M-1",
+        "D=M-D",
+        "@" + labels["TRUE"],
+        "D;JLT",
+        "@" + labels["FALSE"],
+        "D;JGE",
+        "(" + labels["TRUE"] + ")",
+        "@SP",
+        "A=M",
+        "M=-1",
+        "@SP",
+        "M=M+1",
+        "@" + labels["END"],
+        "0;JMP",
+        "(" + labels["FALSE"] + ")",
+        "@SP",
+        "A=M",
+        "M=0",
+        "@SP",
+        "M=M+1",
+        "(" + labels["END"] + ")",
+      ]
+    elif command[0] == "and":
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "D=M",
+        "@SP",
+        "AM=M-1",
+        "M=D&M",
+        "@SP",
+        "M=M+1"
+      ]
+    elif command[0] == "or":
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "D=M",
+        "@SP",
+        "AM=M-1",
+        "M=D|M",
+        "@SP",
+        "M=M+1"
+      ]
+    elif command[0] == "not":
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "M=!M",
+        "@SP",
+        "M=M+1"
+      ]
     else:
-      raise(Exception('Somthing isn\'t right!'))
-
-
-    print(command)
+      raise(Exception('Something isn\'t right!'))
+    return assembly
   
   def writePushPop(self, command):
-    pass
+    if command[0] == "push":
+      source = command[1]
+      pushables = {
+        "constant" : command[2]
+      }
+      assembly = [
+        "@" + pushables[source],
+        "D=A",
+        "@SP",
+        "A=M",
+        "M=D",
+        "@SP",
+        "M=M+1"
+      ]
+    return assembly
     
 
 if __name__ == "__main__":
@@ -140,7 +281,10 @@ if __name__ == "__main__":
       try: 
         c = x.working_parser.advance()
         if x.working_parser.commandType() == 'C_ARITHMETIC':
-          x.writeArithmetic(c)
-        # x.output_file.write(" ".join(c) + "\n")
+          x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
+
+        if x.working_parser.commandType() == 'C_PUSH':
+          x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
+
       except(StopIteration):
         break
