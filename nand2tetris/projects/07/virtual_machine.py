@@ -28,23 +28,23 @@ class Parser(object):
     
   def commandType(self):
     types = {
-      'add' : 'C_ARITHMETIC',
-      'sub' : 'C_ARITHMETIC',
-      'neg' : 'C_ARITHMETIC',
-      'eq' : 'C_ARITHMETIC',
-      'gt' : 'C_ARITHMETIC',
-      'lt' : 'C_ARITHMETIC',
-      'and' : 'C_ARITHMETIC',
-      'or' : 'C_ARITHMETIC',
-      'not' : 'C_ARITHMETIC',
-      'push' : 'C_PUSH',
-      'pop' : 'C_POP',
-      'label' : 'C_LABEL',
-      'goto' : 'C_GOTO',
-      'if-goto' : 'C_IF',
+      'add'      : 'C_ARITHMETIC',
+      'sub'      : 'C_ARITHMETIC',
+      'neg'      : 'C_ARITHMETIC',
+      'eq'       : 'C_ARITHMETIC',
+      'gt'       : 'C_ARITHMETIC',
+      'lt'       : 'C_ARITHMETIC',
+      'and'      : 'C_ARITHMETIC',
+      'or'       : 'C_ARITHMETIC',
+      'not'      : 'C_ARITHMETIC',
+      'push'     : 'C_PUSH',
+      'pop'      : 'C_POP',
+      'label'    : 'C_LABEL',
+      'goto'     : 'C_GOTO',
+      'if-goto'  : 'C_IF',
       'function' : 'C_FUNCTION',
-      'return' : 'C_RETURN',
-      'call' : 'C_CALL',
+      'return'   : 'C_RETURN',
+      'call'     : 'C_CALL',
     }
     return types[self.current[0]]
         
@@ -255,7 +255,6 @@ class CodeWriter(object):
       ]
     return assembly
     
-
 if __name__ == "__main__":
   target = sys.argv[1]
   parsers = []
@@ -282,9 +281,7 @@ if __name__ == "__main__":
         c = x.working_parser.advance()
         if x.working_parser.commandType() == 'C_ARITHMETIC':
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
-
         if x.working_parser.commandType() == 'C_PUSH':
           x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-
       except(StopIteration):
         break
