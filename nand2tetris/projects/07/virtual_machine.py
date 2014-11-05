@@ -239,13 +239,15 @@ class CodeWriter(object):
     return assembly
   
   def writePushPop(self, command):
+    segment = command[1]
+    index = command[2]
     if command[0] == "push":
-      source = command[1]
+      segment = command[1]
       pushables = {
-        "constant" : command[2]
+        "constant" : index
       }
       assembly = [
-        "@" + pushables[source],
+        "@" + pushables[segment],
         "D=A",
         "@SP",
         "A=M",
@@ -253,6 +255,8 @@ class CodeWriter(object):
         "@SP",
         "M=M+1"
       ]
+    elif command[0] == "pop":
+      pass
     return assembly
     
 if __name__ == "__main__":
@@ -281,7 +285,7 @@ if __name__ == "__main__":
         c = x.working_parser.advance()
         if x.working_parser.commandType() == 'C_ARITHMETIC':
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
-        if x.working_parser.commandType() == 'C_PUSH':
+        if x.working_parser.commandType() in ('C_PUSH', 'C_POP'):
           x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
       except(StopIteration):
         break
