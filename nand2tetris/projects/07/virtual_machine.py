@@ -238,16 +238,20 @@ class CodeWriter(object):
       raise(Exception('Something isn\'t right!'))
     return assembly
   
-  def writePushPop(self, command):
-    segment = command[1]
-    index = command[2]
-    if command[0] == "push":
-      segment = command[1]
-      pushables = {
-        "constant" : index
+  def writePushPop(self, c):
+    command = c[0]
+    segment = c[1]
+    index = c[2]
+    segments = {
+        "constant" : index,
+        "local" : "LCL",
+        "this" : "THIS",
+        "that" : "THAT",
+        "argument" : "ARG"
       }
+    if command == "push":
       assembly = [
-        "@" + pushables[segment],
+        "@" + segments[segment],
         "D=A",
         "@SP",
         "A=M",
@@ -255,17 +259,35 @@ class CodeWriter(object):
         "@SP",
         "M=M+1"
       ]
-    elif command[0] == "pop":
-      pass
-    return assembly
+      return assembly
+
+    elif command == "pop":
+      assembly = [
+        "@SP",
+        "AM=M-1",
+        "D=M",
+        "@R13", # top value of the stack storeD at R13 
+        "M=D", 
+        "@" + str(index),
+        "D=A",
+        "@" + segments[segment],
+        "D=M+D",
+        "@R14", # target memory address stored at R14
+        "M=D",
+        "@R13",
+        "D=M",
+        "@R14",
+        "A=M",
+        "M=D"
+      ]
+      return assembly
     
 if __name__ == "__main__":
   target = sys.argv[1]
   parsers = []
 
   if re.search("\.vm$", str(target)):     # if the argument was one .vm file, parse it
-    file = sys.argv[1]
-    p = Parser(file)
+    p = Parser(target)
     parsers.append(p)
   else:                                   # if the argument is not a .vm file, try to
     files = glob.glob(target + '/*.vm')   # treat it as a directory containing .vm files
@@ -283,9 +305,10 @@ if __name__ == "__main__":
     while True:
       try: 
         c = x.working_parser.advance()
+        print(c)
         if x.working_parser.commandType() == 'C_ARITHMETIC':
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
-        if x.working_parser.commandType() in ('C_PUSH', 'C_POP'):
+        elif x.working_parser.commandType() in ('C_PUSH', 'C_POP'):
           x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
       except(StopIteration):
         break
