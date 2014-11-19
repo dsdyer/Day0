@@ -243,43 +243,60 @@ class CodeWriter(object):
     segment = c[1]
     index = c[2]
     segments = {
-        "constant" : index,
+        "constant" : "0",
         "local" : "LCL",
         "this" : "THIS",
         "that" : "THAT",
-        "argument" : "ARG"
+        "argument" : "ARG",
+        "temp" : "3",
+        "pointer" : "5",
       }
     if command == "push":
-      assembly = [
-        "@" + segments[segment],
-        "D=A",
+      if segment in ("local", "argument", "this", "that"):
+        #find the requested value and store it in D:
+        find_value = [
+
+        ]
+      elif segment == "constant":
+        find_value = [
+
+        ]
+      else:
+        find_value = [
+
+        ]
+      assembly = find_value + [
+        #put D on top of the stack:
         "@SP",
         "A=M",
         "M=D",
         "@SP",
         "M=M+1"
-      ]
+        ]
       return assembly
 
     elif command == "pop":
-      assembly = [
-        "@SP",
-        "AM=M-1",
-        "D=M",
-        "@R13", # top value of the stack storeD at R13 
-        "M=D", 
-        "@" + str(index),
-        "D=A",
-        "@" + segments[segment],
-        "D=M+D",
-        "@R14", # target memory address stored at R14
-        "M=D",
-        "@R13",
-        "D=M",
-        "@R14",
-        "A=M",
-        "M=D"
-      ]
+      if segment in ("local", "this", "that", "argument"):
+        assembly = [
+          "@SP",
+          "AM=M-1",
+          "D=M",
+          "@R13", # top value of the stack storeD at R13 
+          "M=D", 
+          "@" + str(index),
+          "D=A",
+          "@" + segments[segment],
+          "D=M+D",
+          "@R14", # target memory address stored at R14
+          "M=D",
+          "@R13",
+          "D=M",
+          "@R14",
+          "A=M",
+          "M=D"
+        ]
+      if segment == "temp":
+        assembly = []
       return assembly
     
 if __name__ == "__main__":
