@@ -243,61 +243,47 @@ class CodeWriter(object):
     segment = c[1]
     index = c[2]
     segments = {
-        "constant" : "0",
-        "local" : "LCL",
-        "this" : "THIS",
-        "that" : "THAT",
-        "argument" : "ARG",
-        "temp" : "3",
-        "pointer" : "5",
+        "constant" : ["0", "A"],
+        "temp"     : ["3", "A"],
+        "pointer"  : ["5", "A"],
+        "local"    : ["LCL", "M"],
+        "this"     : ["THIS", "M"],
+        "that"     : ["THAT", "M"],
+        "argument" : ["ARG", "M"]
       }
+    #find the requested address and store it in D:
+    find_address = [
+      "@" + segments[segment][0],
+      "D=" + segments[segment][1],
+      "@" + str(index),
+      "AD=D+A"
+    ]
     if command == "push":
-      if segment in ("local", "argument", "this", "that"):
-        #find the requested value and store it in D:
-        find_value = [
-
+      if segment != "static":
+        if segment != "constant":
+          find_address = find_address + ["D=M"]
+        assembly = find_address + [
+          #put D on top of the stack:
+          "@SP",
+          "A=M",
+          "M=D",
+          "@SP",
+          "M=M+1"
         ]
-      elif segment == "constant":
-        find_value = [
-
-        ]
-      else:
-        find_value = [
-
-        ]
-      assembly = find_value + [
-        #put D on top of the stack:
-        "@SP",
-        "A=M",
-        "M=D",
-        "@SP",
-        "M=M+1"
-        ]
-      return assembly
 
     elif command == "pop":
-      if segment in ("local", "this", "that", "argument"):
-        assembly = [
-          "@SP",
-          "AM=M-1",
-          "D=M",
-          "@R13", # top value of the stack storeD at R13 
-          "M=D", 
-          "@" + str(index),
-          "D=A",
-          "@" + segments[segment],
-          "D=M+D",
+      if segment != "static":
+        assembly = find_address + [
           "@R14", # target memory address stored at R14
           "M=D",
-          "@R13",
-          "D=M",
+          "@SP",
+          "AM=M-1",
+          "D=M", # top value of the stack stored at D
           "@R14",
-          "A=M",
+          "A=M", 
           "M=D"
         ]
-      if segment == "temp":
-        assembly = []
-      return assembly
+    return assembly
     
 if __name__ == "__main__":
   target = sys.argv[1]
