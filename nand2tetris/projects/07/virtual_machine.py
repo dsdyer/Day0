@@ -244,8 +244,8 @@ class CodeWriter(object):
     index = c[2]
     segments = {
         "constant" : ["0", "A"],
-        "temp"     : ["3", "A"],
-        "pointer"  : ["5", "A"],
+        "pointer"  : ["3", "A"],
+        "temp"     : ["5", "A"],
         "local"    : ["LCL", "M"],
         "this"     : ["THIS", "M"],
         "that"     : ["THAT", "M"],
