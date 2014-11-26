@@ -23,7 +23,7 @@ class Parser(object):
       print(line)
     
   def advance(self):
-    self.current = self.commands.next()
+    self.current = self.commands.__next__()
     return self.current
     
   def commandType(self):
@@ -239,50 +239,56 @@ class CodeWriter(object):
     return assembly
   
   def writePushPop(self, c):
+    filename = re.findall("(\w+)\.vm$", self.working_parser.arg)[0]
     command = c[0]
     segment = c[1]
     index = c[2]
     segments = {
-        "constant" : ["0", "A"],
-        "pointer"  : ["3", "A"],
-        "temp"     : ["5", "A"],
-        "local"    : ["LCL", "M"],
-        "this"     : ["THIS", "M"],
-        "that"     : ["THAT", "M"],
-        "argument" : ["ARG", "M"]
-      }
+      "constant" : ["0", "A"],
+      "pointer"  : ["3", "A"],
+      "temp"     : ["5", "A"],
+      "local"    : ["LCL", "M"],
+      "this"     : ["THIS", "M"],
+      "that"     : ["THAT", "M"],
+      "argument" : ["ARG", "M"],
+    }
     #find the requested address and store it in D:
-    find_address = [
-      "@" + segments[segment][0],
-      "D=" + segments[segment][1],
-      "@" + str(index),
-      "AD=D+A"
-    ]
+    if segment == "static":
+      find_address = [
+        "@" + filename + "." + str(index),
+        "D=M"
+      ]
+    else:
+      find_address = [
+        "@" + segments[segment][0],
+        "D=" + segments[segment][1],
+        "@" + str(index),
+        "AD=D+A"
+      ]
     if command == "push":
-      if segment != "static":
-        if segment != "constant":
-          find_address = find_address + ["D=M"]
-        assembly = find_address + [
-          #put D on top of the stack:
-          "@SP",
-          "A=M",
-          "M=D",
-          "@SP",
-          "M=M+1"
-        ]
+      if segment not in ("constant", "static"):
+        find_address = find_address + ["D=M"]
+      assembly = find_address + [
+        #put D on top of the stack:
+        "@SP",
+        "A=M",
+        "M=D",
+        "@SP",
+        "M=M+1"
+      ]
 
     elif command == "pop":
-      if segment != "static":
-        assembly = find_address + [
-          "@R14", # target memory address stored at R14
-          "M=D",
-          "@SP",
-          "AM=M-1",
-          "D=M", # top value of the stack stored at D
-          "@R14",
-          "A=M", 
-          "M=D"
-        ]
+      assembly = find_address + [
+        "@R14", # target memory address stored at R14
+        "M=D",
+        "@SP",
+        "AM=M-1",
+        "D=M", # top value of the stack stored at D
+        "@R14",
+        "A=M", 
+        "M=D"
+      ]
+    print(filename)
     return assembly
     
 if __name__ == "__main__":
@@ -308,7 +314,6 @@ if __name__ == "__main__":
     while True:
       try: 
         c = x.working_parser.advance()
-        print(c)
         if x.working_parser.commandType() == 'C_ARITHMETIC':
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
         elif x.working_parser.commandType() in ('C_PUSH', 'C_POP'):
