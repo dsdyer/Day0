@@ -23,7 +23,7 @@ class Parser(object):
       print(line)
     
   def advance(self):
-    self.current = self.commands.__next__()
+    self.current = self.commands.next()
     return self.current
     
   def commandType(self):
@@ -288,7 +288,6 @@ class CodeWriter(object):
         "A=M", 
         "M=D"
       ]
-    print(filename)
     return assembly
   def writeInit(self, c):
     assembly = [
@@ -300,17 +299,23 @@ class CodeWriter(object):
       # Whatever that means
     ]
   def writeLabel(self, c):
-    pass
+    assembly = ['label']
+    return assembly
   def writeGoto(self, c):
-    pass
+    assembly = ['goto']
+    return assembly
   def writeIf(self, c):
-    pass
+    assembly = ['if']
+    return assembly
   def writeCall(self, c):
-    pass
+    assembly = ['call']
+    return assembly
   def writeReturn(self, c):
-    pass
+    assembly = ['return']
+    return assembly
   def writeFunction(self, c):
-    pass
+    assembly = ['function']
+    return assembly
     
 if __name__ == "__main__":
   target = sys.argv[1]
@@ -340,13 +345,17 @@ if __name__ == "__main__":
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
         elif t in ('C_PUSH', 'C_POP'):
           x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-        elif t in ('C_PUSH', 'C_POP'): #1
-          x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-        elif t in ('C_PUSH', 'C_POP'): #2
-          x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-        elif t in ('C_PUSH', 'C_POP'): #3
-          x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-        elif t in ('C_PUSH', 'C_POP'): #4
-          x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
+        if t == 'C_LABEL':
+          x.output_file.write("\n".join(x.writeLabel(c)) + "\n")
+        if t == 'C_GOTO':
+          x.output_file.write("\n".join(x.writeGoto(c)) + "\n")
+        if t == 'C_IF':
+          x.output_file.write("\n".join(x.writeIf(c)) + "\n")
+        if t == 'C_CALL':
+          x.output_file.write("\n".join(x.writeCall(c)) + "\n")
+        if t == 'C_RETURN':
+          x.output_file.write("\n".join(x.writeReturn(c)) + "\n")
+        if t == 'C_FUNCTION':
+          x.output_file.write("\n".join(x.writeFunction(c)) + "\n")
       except(StopIteration):
         break
