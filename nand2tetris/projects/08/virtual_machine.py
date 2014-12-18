@@ -8,6 +8,7 @@ class Parser(object):
   def __init__(self, arg):
     self.arg = arg
     self.file = open(self.arg, "r") # open the file
+    self.name = re.findall("(\w+)\.vm$", self.file.name)[0]
     self.commands = []
 
     for line in self.file:
@@ -64,10 +65,14 @@ class CodeWriter(object):
   def __init__(self):
     self.output_file = open("vm_output.asm", "w+")
     self.working_parser = {}
-    self.labelID = 0;
+    self.labelID = 0
 
-  def setFileName(self, parser):
+  def setParser(self, parser):
     self.working_parser = parser
+    self.file_name = self.working_parser.name
+
+  def setFileName(self, name):
+    self.file_name = name
 
   def uniqueLabel(self, label):
     unique_label = label + str(self.labelID)
@@ -299,13 +304,24 @@ class CodeWriter(object):
       # Whatever that means
     ]
   def writeLabel(self, c):
-    assembly = ['label']
+    assembly = ['(' + self.file_name + '$' + self.working_parser.arg1() + ')']
     return assembly
   def writeGoto(self, c):
-    assembly = ['goto']
+    label = self.file_name + '$' + self.working_parser.arg1()
+    assembly = [
+      '@' + label,
+      '0;JMP'
+    ]
     return assembly
   def writeIf(self, c):
-    assembly = ['if']
+    label = self.file_name + '$' + self.working_parser.arg1()
+    assembly = [
+      '@SP',
+      'AM=M-1',
+      'D=M',
+      '@' + label,
+      'D;JNE'
+    ]
     return assembly
   def writeCall(self, c):
     assembly = ['call']
@@ -314,7 +330,8 @@ class CodeWriter(object):
     assembly = ['return']
     return assembly
   def writeFunction(self, c):
-    assembly = ['function']
+    self.setFileName(self.working_parser.arg1())
+    assembly = [self.file_name]
     return assembly
     
 if __name__ == "__main__":
@@ -336,7 +353,7 @@ if __name__ == "__main__":
   x = CodeWriter()
 
   for a in parsers:
-    x.setFileName(a)
+    x.setParser(a)
     while True:
       try: 
         c = x.working_parser.advance()
