@@ -309,23 +309,52 @@ class CodeWriter(object):
   def writeGoto(self, c):
     label = self.file_name + '$' + self.working_parser.arg1()
     assembly = [
-      '@' + label,
-      '0;JMP'
+      "@" + label,
+      "0;JMP"
     ]
     return assembly
   def writeIf(self, c):
     label = self.file_name + '$' + self.working_parser.arg1()
     assembly = [
-      '@SP',
-      'AM=M-1',
-      'D=M',
-      '@' + label,
-      'D;JNE'
+      "@SP",
+      "AM=M-1",
+      "D=M",
+      "@" + label,
+      "D;JNE"
     ]
     return assembly
   def writeCall(self, c):
-    assembly = ['call']
+    return_address = self.uniqueLabel('return_address')
+    args = c[2]
+    segments = [return_address, "LCL", "ARG", "THIS", "THAT"]
+    assembly = ['call: ']
+    for a in segments:
+      assembly.extend([
+        "@" + a,
+        "D=M",
+        "@SP",
+        "A=M",
+        "M=D",
+        "@SP",
+        "M=M+1"
+        ])
+    assembly.extend([
+        "@SP",
+        "D=M",
+        "@" + str(int(args) - 5),
+        "D=D-A",
+        "@ARG",
+        "M=D",
+        "@SP",
+        "D=M",
+        "@LCL",
+        "M=D",
+        "@" + c[1],
+        "0;JMP",
+        "(" + return_address + ")"
+      ])
     return assembly
+
   def writeReturn(self, c):
     assembly = ['return']
     return assembly
@@ -348,7 +377,7 @@ if __name__ == "__main__":
         p = Parser(x)
         parsers.append(p)
     else:                                 # if that fails tell them
-      raise Exception('Bad input. You fix.')
+      raise Exception('Input is not a VM file or directory. Getting kinda tired of your shit.')
 
   x = CodeWriter()
 
