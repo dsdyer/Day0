@@ -260,7 +260,7 @@ class CodeWriter(object):
     #find the requested address and store it in D:
     if segment == "static":
       find_address = [
-        "@" + filename + "." + str(index),
+        "@" + self.file_name + "." + str(index),
         "D=M"
       ]
     else:
@@ -355,8 +355,44 @@ class CodeWriter(object):
       ])
     return assembly
 
-  def writeReturn(self, c):
-    assembly = ["return"]
+  def writeReturn(self):
+    assembly = [
+      "@LCL",
+      "D=M",
+      "@5",
+      "M=D", #temp 0 holds LCL (call this FRAME)
+      "@5",
+      "D=D-A",
+      "@6",
+      "M=D", #temp 1 holds return_address (call this RET)
+      "@SP",
+      "AM=M-1",
+      "D=M",
+      "@ARG",
+      "M=D",
+      "D=A+1",
+      "@SP",
+      "M=D",
+      "@5", #get FRAME
+      "MD=M-1",
+      "@THAT",
+      "M=D",
+      "@5",
+      "MD=M-1",
+      "@THIS",
+      "M=D",
+      "@5", 
+      "MD=M-1",
+      "@ARG",
+      "M=D",
+      "@5",
+      "MD=M-1",
+      "@LCL",
+      "M=D",
+      "@6",
+      "A=M",
+      "0;JMP"
+    ]
     return assembly
   def writeFunction(self, c):
     self.setFileName(self.working_parser.arg1())
@@ -402,7 +438,7 @@ if __name__ == "__main__":
         if t == "C_CALL":
           x.output_file.write("\n".join(x.writeCall(c)) + "\n")
         if t == "C_RETURN":
-          x.output_file.write("\n".join(x.writeReturn(c)) + "\n")
+          x.output_file.write("\n".join(x.writeReturn()) + "\n")
         if t == "C_FUNCTION":
           x.output_file.write("\n".join(x.writeFunction(c)) + "\n")
       except(StopIteration):
