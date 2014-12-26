@@ -446,7 +446,7 @@ if __name__ == "__main__":
         p = Parser(x)
         parsers.append(p)
     else:                                 # if that fails tell them
-      raise Exception("Input is not a VM file or directory. Getting kinda tired of your shit.")
+      raise Exception("Input is not a VM file or directory. Go fix it.")
 
   x = CodeWriter()
   # if some bullshit:
