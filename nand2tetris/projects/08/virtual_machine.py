@@ -24,7 +24,7 @@ class Parser(object):
       print(line)
     
   def advance(self):
-    self.current = self.commands.next()
+    self.current = self.commands.__next__()
     return self.current
     
   def commandType(self):
@@ -243,7 +243,7 @@ class CodeWriter(object):
       raise(Exception("Something isn\"t right!"))
     return assembly
   
-  def writePushPop(self, c):
+  def writePushPop(self, c, pointer=False):
     filename = re.findall("(\w+)\.vm$", self.working_parser.arg)[0]
     command = c[0]
     segment = c[1]
@@ -257,6 +257,8 @@ class CodeWriter(object):
       "that"     : ["THAT", "M"],
       "argument" : ["ARG", "M"],
     }
+    pointer_type = 'A' if pointer else segments[segment][1]
+
     #find the requested address and store it in D:
     if segment == "static":
       find_address = [
@@ -266,7 +268,7 @@ class CodeWriter(object):
     else:
       find_address = [
         "@" + segments[segment][0],
-        "D=" + segments[segment][1],
+        "D=" + pointer_type,
         "@" + str(index),
         "AD=D+A"
       ]
@@ -294,15 +296,15 @@ class CodeWriter(object):
         "M=D"
       ]
     return assembly
-  def writeInit(self, c):
+  def writeInit(self):
     assembly = [
       "@256",
       "D=A",
       "@SP",
       "M=D"
-      # Stack pointer is now set to 256, you need to call Sys.init,
-      # Whatever that means
     ]
+    assembly.extend(self.writeCall(['call', 'Sys.init', '0']))
+    return assembly
   def writeLabel(self, c):
     assembly = ["(" + self.file_name + "$" + self.working_parser.arg1() + ")"]
     return assembly
@@ -326,22 +328,24 @@ class CodeWriter(object):
   def writeCall(self, c):
     return_address = self.uniqueLabel("return_address")
     args = c[2]
-    segments = [return_address, "LCL", "ARG", "THIS", "THAT"]
-    assembly = []
+    segments = ["local", "argument", "this", "that"]
+    assembly = [
+      '@' + return_address,
+      'D=A',
+      '@SP',
+      'A=M',
+      'M=D',
+      '@SP',
+      'M=M+1'
+    ]
     for a in segments:
-      assembly.extend([
-        "@" + a,
-        "D=M",
-        "@SP",
-        "A=M",
-        "M=D",
-        "@SP",
-        "M=M+1"
-        ])
+      assembly.extend(self.writePushPop(['push', a, '0'], True))
     assembly.extend([
         "@SP",
         "D=M",
-        "@" + str(int(args) - 5),
+        "@" + str(int(args)),
+        "D=D-A", # D = SP - number of args
+        "@5",
         "D=D-A",
         "@ARG",
         "M=D",
@@ -356,49 +360,66 @@ class CodeWriter(object):
     return assembly
 
   def writeReturn(self):
-    assembly = [
-      "@LCL",
-      "D=M",
-      "@5",
-      "M=D", #temp 0 holds LCL (call this FRAME)
-      "@5",
-      "D=D-A",
-      "@6",
-      "M=D", #temp 1 holds return_address (call this RET)
-      "@SP",
-      "AM=M-1",
-      "D=M",
-      "@ARG",
-      "M=D",
-      "D=A+1",
-      "@SP",
-      "M=D",
-      "@5", #get FRAME
-      "MD=M-1",
-      "@THAT",
-      "M=D",
-      "@5",
-      "MD=M-1",
-      "@THIS",
-      "M=D",
-      "@5", 
-      "MD=M-1",
-      "@ARG",
-      "M=D",
-      "@5",
-      "MD=M-1",
-      "@LCL",
-      "M=D",
-      "@6",
-      "A=M",
-      "0;JMP"
-    ]
+    assembly = ['//start return']
+    assembly.extend(self.writePushPop(['push', 'local', '0'], True)) # push the memory address stored at LCL
+    assembly.extend(self.writePushPop(['pop', 'temp', '0'])) # store local in a temporary variable
+    assembly.extend([
+    	'//LCL is stored in temp[0], which is R5',
+    	'@LCL',
+    	'D=M',
+    	'@5',
+    	'A=D-A //LCL-5',
+      'D=M',
+      '@R6',
+      'M=D // Return address is stored in R6'
+    ])
+    assembly.extend(self.writePushPop(['pop', 'argument', '0']))
+    assembly.extend([
+      '@ARG',
+      'D=M',
+      '@1',
+      'D=D+A',
+      '@SP',
+      'M=D',
+      '@R5',
+      'D=M',
+      '@1',
+      'A=D-A',
+      'D=M',
+      '@THAT',
+      'M=D',
+      '@R5',
+      'D=M',
+      '@2',
+      'A=D-A',
+      'D=M',
+      '@THIS',
+      'M=D',
+      '@R5',
+      'D=M',
+      '@3',
+      'A=D-A',
+      'D=M',
+      '@ARG',
+      'M=D',
+      '@R5',
+      'D=M',
+      '@4',
+      'A=D-A',
+      'D=M',
+      '@LCL',
+      'M=D',
+      '@R6',
+      'A=M',
+      '0;JMP'
+      ])
     return assembly
+
   def writeFunction(self, c):
-    self.setFileName(self.working_parser.arg1())
-    assembly = ["(" + self.file_name + ")"]
+    assembly = ["(" + self.working_parser.arg1() + ")"]
     for n in range(int(c[2])):
       assembly.extend(self.writePushPop(["push", "constant", "0"]))
+    print(assembly)
     return assembly
     
 if __name__ == "__main__":
@@ -418,9 +439,23 @@ if __name__ == "__main__":
       raise Exception("Input is not a VM file or directory. Getting kinda tired of your shit.")
 
   x = CodeWriter()
+  # if some bullshit:
+  #   x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
+
+  # parsers.insert(0, parsers.pop(parsers.index('Sys')))
 
   for a in parsers:
-    x.setParser(a)
+    if a.name == "Sys":
+      parsers.insert(0, parsers.pop(parsers.index(a)))
+
+  for a in parsers:
+    if a.name == 'Sys':
+      print('sysing')
+      x.setParser(a)
+      x.output_file.write("\n".join(x.writeInit()) + "\n")
+    else:
+      print('maining')
+      x.setParser(a)
     while True:
       try: 
         c = x.working_parser.advance()
@@ -429,17 +464,18 @@ if __name__ == "__main__":
           x.output_file.write("\n".join(x.writeArithmetic(c)) + "\n")
         elif t in ("C_PUSH", "C_POP"):
           x.output_file.write("\n".join(x.writePushPop(c)) + "\n")
-        if t == "C_LABEL":
+        elif t == "C_LABEL":
           x.output_file.write("\n".join(x.writeLabel(c)) + "\n")
-        if t == "C_GOTO":
+        elif t == "C_GOTO":
           x.output_file.write("\n".join(x.writeGoto(c)) + "\n")
-        if t == "C_IF":
+        elif t == "C_IF":
           x.output_file.write("\n".join(x.writeIf(c)) + "\n")
-        if t == "C_CALL":
+        elif t == "C_CALL":
           x.output_file.write("\n".join(x.writeCall(c)) + "\n")
-        if t == "C_RETURN":
+        elif t == "C_RETURN":
           x.output_file.write("\n".join(x.writeReturn()) + "\n")
-        if t == "C_FUNCTION":
+        elif t == "C_FUNCTION":
           x.output_file.write("\n".join(x.writeFunction(c)) + "\n")
+          print(c)
       except(StopIteration):
         break
