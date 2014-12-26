@@ -255,17 +255,14 @@ class CodeWriter(object):
       "local"    : ["LCL", "M"],
       "this"     : ["THIS", "M"],
       "that"     : ["THAT", "M"],
-      "argument" : ["ARG", "M"],
+      "argument" : ["ARG", "M"]
     }
-    pointer_type = 'A' if pointer else segments[segment][1]
 
     #find the requested address and store it in D:
     if segment == "static":
-      find_address = [
-        "@" + self.file_name + "." + str(index),
-        "D=M"
-      ]
+      pass
     else:
+      pointer_type = 'A' if pointer else segments[segment][1]
       find_address = [
         "@" + segments[segment][0],
         "D=" + pointer_type,
@@ -273,9 +270,16 @@ class CodeWriter(object):
         "AD=D+A"
       ]
     if command == "push":
+      if segment == "static":
+        find_address = [
+          '//Start static push/pop',
+          "@" + self.file_name + "." + str(index),
+          "D=M"
+        ]
       if segment not in ("constant", "static"):
         find_address = find_address + ["D=M"]
       assembly = find_address + [
+        '//Start push',
         #put D on top of the stack:
         "@SP",
         "A=M",
@@ -285,7 +289,14 @@ class CodeWriter(object):
       ]
 
     elif command == "pop":
+      if segment == "static":
+        find_address = [
+          '//Start static push/pop',
+          "@" + self.file_name + "." + str(index),
+          "D=A"
+        ]
       assembly = find_address + [
+        '//Start pop',
         "@R14", # target memory address stored at R14
         "M=D",
         "@SP",
@@ -419,7 +430,6 @@ class CodeWriter(object):
     assembly = ["(" + self.working_parser.arg1() + ")"]
     for n in range(int(c[2])):
       assembly.extend(self.writePushPop(["push", "constant", "0"]))
-    print(assembly)
     return assembly
     
 if __name__ == "__main__":
@@ -450,11 +460,9 @@ if __name__ == "__main__":
 
   for a in parsers:
     if a.name == 'Sys':
-      print('sysing')
       x.setParser(a)
       x.output_file.write("\n".join(x.writeInit()) + "\n")
     else:
-      print('maining')
       x.setParser(a)
     while True:
       try: 
@@ -476,6 +484,5 @@ if __name__ == "__main__":
           x.output_file.write("\n".join(x.writeReturn()) + "\n")
         elif t == "C_FUNCTION":
           x.output_file.write("\n".join(x.writeFunction(c)) + "\n")
-          print(c)
       except(StopIteration):
         break
